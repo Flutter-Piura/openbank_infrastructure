@@ -1,0 +1,36 @@
+name: Propuesta o defecto
+description: Reporta un problema o propone una mejora de infraestructura.
+title: "[Infrastructure]: "
+labels: [triage]
+body:
+  - type: markdown
+    attributes:
+      value: No incluyas secretos, credenciales ni datos reales.
+  - type: dropdown
+    id: type
+    attributes:
+      label: Tipo
+      options: [Defecto, Entorno local, CI/CD, Staging, Documentación]
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Descripción e impacto
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validación y rollback propuestos
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Verificación
+      options:
+        - label: Confirmo que no incluí secretos ni datos reales.
+          required: true
+        - label: Revisé issues existentes.
+          required: true

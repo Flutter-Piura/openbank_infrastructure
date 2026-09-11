@@ -1,0 +1,54 @@
+name: openbank
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: openbank
+      POSTGRES_USER: openbank
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openbank}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - openbank_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openbank -d openbank"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: ../openbank_api
+      target: migration
+    environment:
+      DATABASE_URL: postgresql://openbank:${POSTGRES_PASSWORD:-openbank}@postgres:5432/openbank
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ../openbank_api
+      target: runtime
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://openbank:${POSTGRES_PASSWORD:-openbank}@postgres:5432/openbank
+      JWT_SECRET: ${JWT_SECRET:-local-only-openbank-secret-change-me-now}
+      ACCESS_TOKEN_TTL_SECONDS: ${ACCESS_TOKEN_TTL_SECONDS:-900}
+      REFRESH_TOKEN_TTL_SECONDS: ${REFRESH_TOKEN_TTL_SECONDS:-604800}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  openbank_postgres_data:
